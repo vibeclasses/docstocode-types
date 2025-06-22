@@ -89,9 +89,16 @@ export class SimpleValidator {
       ? schema.type.find(t => t !== 'null')
       : schema.type
 
-    if (expectedType !== undefined && typeof value !== expectedType) {
-      errors.push(`${fieldName}: Expected ${expectedType}, got ${typeof value}`)
-      return { valid: false, errors }
+    if (expectedType !== undefined) {
+      if (expectedType === 'array' && !Array.isArray(value)) {
+        errors.push(`${fieldName}: Expected array, got ${typeof value}`)
+        return { valid: false, errors }
+      } else if (expectedType !== 'array' && typeof value !== expectedType) {
+        errors.push(
+          `${fieldName}: Expected ${expectedType}, got ${typeof value}`,
+        )
+        return { valid: false, errors }
+      }
     }
 
     // String validations
@@ -130,10 +137,52 @@ export class SimpleValidator {
       errors.push(`${fieldName}: Must be ${schema.const}`)
     }
 
+    // Array validations
+    if (schema.type === 'array' && Array.isArray(value)) {
+      if (schema.minItems !== undefined && value.length < schema.minItems) {
+        errors.push(`${fieldName}: Minimum items is ${schema.minItems}`)
+      }
+      if (schema.maxItems !== undefined && value.length > schema.maxItems) {
+        errors.push(`${fieldName}: Maximum items is ${schema.maxItems}`)
+      }
+      if (schema.uniqueItems === true) {
+        const uniqueValues = new Set(value)
+        if (uniqueValues.size !== value.length) {
+          errors.push(`${fieldName}: Items must be unique`)
+        }
+      }
+
+      // Validate array items
+      if (schema.items !== undefined && typeof schema.items === 'object') {
+        for (let i = 0; i < value.length; i++) {
+          const itemResult = this.validateField(
+            value[i],
+            schema.items as JSONSchema7,
+            `${fieldName}[${i}]`,
+          )
+          errors.push(...itemResult.errors)
+        }
+      }
+    }
+
+    // Object validations (nested objects)
+    if (
+      schema.type === 'object' &&
+      typeof value === 'object' &&
+      value !== null
+    ) {
+      const nestedResult = this.validateSchema(value, schema)
+      errors.push(...nestedResult.errors.map(error => `${fieldName}.${error}`))
+    }
+
     return { valid: errors.length === 0, errors }
   }
 
   validate(data: unknown, schema: JSONSchema7): ValidationResult {
+    // Handle direct type validation (not just object validation)
+    if (schema.type !== 'object') {
+      return this.validateField(data, schema, 'value')
+    }
     return this.validateSchema(data, schema)
   }
 }
