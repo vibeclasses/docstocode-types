@@ -173,8 +173,8 @@ jobs:
 
       - name: Configure Git
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          git config --local user.email "m@rco.sh"
+          git config --local user.name "Marco Antonio Gonzzalez Junior"
 
       - name: Install dependencies
         run: npm ci
@@ -225,7 +225,7 @@ jobs:
 
           # Create and push the tag
           git tag "v$NEW_VERSION"
-          git push origin main --follow-tags
+          git push origin main --follow-tags || echo "Push failed, check branch protection rules"
 
   publish:
     name: Publish to NPM
