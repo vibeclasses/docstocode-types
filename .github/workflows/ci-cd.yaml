@@ -231,7 +231,7 @@ jobs:
   publish:
     name: Publish to NPM
     runs-on: ubuntu-latest
-    needs: [version-bump]
+    needs: [auto-version]
     # if: github.event_name == 'release' && github.event.action == 'published'
     steps:
       - name: Checkout code
