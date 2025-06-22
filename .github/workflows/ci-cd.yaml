@@ -257,50 +257,50 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Determine version bump type
-        id: version-type
-        run: |
-          # Get the latest commit message from the release
-          COMMIT_MSG="${{ github.event.release.body }}"
+      # - name: Determine version bump type
+      #   id: version-type
+      #   run: |
+      #     # Get the latest commit message from the release
+      #     COMMIT_MSG="${{ github.event.release.body }}"
 
-          # If release body is empty, get the latest commit message
-          if [ -z "$COMMIT_MSG" ]; then
-            COMMIT_MSG=$(git log -1 --pretty=%B)
-          fi
+      #     # If release body is empty, get the latest commit message
+      #     if [ -z "$COMMIT_MSG" ]; then
+      #       COMMIT_MSG=$(git log -1 --pretty=%B)
+      #     fi
 
-          echo "Commit message: $COMMIT_MSG"
+      #     echo "Commit message: $COMMIT_MSG"
 
-          # Convert to lowercase for case-insensitive matching
-          COMMIT_MSG_LOWER=$(echo "$COMMIT_MSG" | tr '[:upper:]' '[:lower:]')
+      #     # Convert to lowercase for case-insensitive matching
+      #     COMMIT_MSG_LOWER=$(echo "$COMMIT_MSG" | tr '[:upper:]' '[:lower:]')
 
-          # Determine version bump type based on commit message
-          if echo "$COMMIT_MSG_LOWER" | grep -E "(bug|fix)" > /dev/null; then
-            VERSION_TYPE="patch"
-          elif echo "$COMMIT_MSG_LOWER" | grep -E "release" > /dev/null; then
-            VERSION_TYPE="major"
-          else
-            VERSION_TYPE="minor"
-          fi
+      #     # Determine version bump type based on commit message
+      #     if echo "$COMMIT_MSG_LOWER" | grep -E "(bug|fix)" > /dev/null; then
+      #       VERSION_TYPE="patch"
+      #     elif echo "$COMMIT_MSG_LOWER" | grep -E "release" > /dev/null; then
+      #       VERSION_TYPE="major"
+      #     else
+      #       VERSION_TYPE="minor"
+      #     fi
 
-          echo "Version bump type: $VERSION_TYPE"
-          echo "version-type=$VERSION_TYPE" >> $GITHUB_OUTPUT
+      #     echo "Version bump type: $VERSION_TYPE"
+      #     echo "version-type=$VERSION_TYPE" >> $GITHUB_OUTPUT
 
-      - name: Bump version
-        run: |
-          echo "Bumping version with type: ${{ steps.version-type.outputs.version-type }}"
-          npm version ${{ steps.version-type.outputs.version-type }} --no-git-tag-version
+      # - name: Bump version
+      #   run: |
+      #     echo "Bumping version with type: ${{ steps.version-type.outputs.version-type }}"
+      #     npm version ${{ steps.version-type.outputs.version-type }} --no-git-tag-version
 
-          # Get the new version
-          NEW_VERSION=$(node -p "require('./package.json').version")
-          echo "New version: $NEW_VERSION"
+      #     # Get the new version
+      #     NEW_VERSION=$(node -p "require('./package.json').version")
+      #     echo "New version: $NEW_VERSION"
 
-          # Update the git tag to match the new version
-          git add package.json package-lock.json
-          git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
+      #     # Update the git tag to match the new version
+      #     git add package.json package-lock.json
+      #     git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
 
-          # Update the release tag to point to the new commit
-          git tag -f ${{ github.event.release.tag_name }}
-          git push origin ${{ github.event.release.tag_name }} --force
+      #     # Update the release tag to point to the new commit
+      #     git tag -f ${{ github.event.release.tag_name }}
+      #     git push origin ${{ github.event.release.tag_name }} --force
 
       - name: Build package
         run: npm run build
